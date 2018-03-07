@@ -1,2 +1,5 @@
-# milobahgSFTP
-A simple SSH server that can be run using a persistant Docker data volume.
+# Docker SFTP server with chroot'd users.
+
+Edit the Dockerfile with the root password of your choice, otherwise use the default password of 'ChangeMeNow' and then change at login. Only root used is allowed TTY access, once you are logged in run 'sftpsystem' to create a new SFTP user account. SFTP users can only use SFTP, not TTY. Two volumes created (optional) at tun time, inspect to see where the data is help locally on host.
+
+docker run --name sftp -v sftpdata:/home -v sftplogs:/var/sftp_log -p 2222:22 -d milobahg/sftp:latest
