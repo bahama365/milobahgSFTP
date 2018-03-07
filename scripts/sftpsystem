@@ -1,0 +1,28 @@
+#!/bin/bash
+
+echo
+echo
+
+selection=
+until [ "$selection" = "0" ]; do
+    echo ""
+    echo "Welcome, please make a selection:"
+    echo ""
+    echo "1 - Create a new user"
+    echo "2 - Change a password"
+    echo "3 - Search for account"
+    echo "4 - List of last 10 deleted accounts"
+    echo "0 - Exit program"
+    echo ""
+    echo -n "Enter selection: "
+    read selection
+    echo ""
+    case $selection in
+        1 ) mkuser.sh ;;
+        2 ) accpasswd.sh ;;
+        3 ) accsearch.sh ;;
+	      4 ) accdelcheck.sh ;;
+        0 ) exit ;;
+        * ) echo "Please enter 1, 2, 4 or 0"
+    esac
+done

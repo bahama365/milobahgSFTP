@@ -1,0 +1,97 @@
+#!/bin/bash
+clear
+#
+# This script checks what sft* that have not logged on, for the 
+# current length of /var/log/secure
+#
+# Make a temporary file variable for storing the username list
+temp1=$(mktemp -t temp1.XXXXX)
+temp2=$(mktemp -t temp2.XXXXX)
+temp3=$(mktemp -t temp3.XXXXX)
+temp4=$(mktemp -t temp4.XXXXX)
+counter=1
+counter2=1
+date=$(date +%Y-%m-%d)
+dateRange=$(cat /var/log/secure | awk 'NR==1{print $1,$2,$3}')
+#
+# First, make a file containing all usernames with a UID above 1000, input into the temp file 
+# made earlier.
+cat /etc/passwd | awk -F":" '{if ($3 >= 1000) print $1}' > $temp1
+#
+# Then, ask what file you want to test:
+echo "This program checks over /var/log/secure format files for login activity"
+echo
+sleep 1
+read -p "What file would you like to check? [Enter for default= /var/log/secure]?: " fileName
+if [ -z $fileName ]
+then
+  echo "Checking /var/log/secure as no other file given..."
+  sleep 1
+  echo "Current /var/log/secure begins on $dateRange"
+  sleep 1
+  echo "Running program....."
+  cat /var/log/secure | grep opened | awk '{print $11}' > $temp2
+else
+  echo "Checking $fileName ..."
+  cat $fileName | grep opened | awk '{print $11}' > $temp2
+fi
+sleep 1
+#
+#
+# Now start checking if logged in usernames ($temp2) match the ones in /etc/passwd ($temp1)
+for userName in $(cat $temp1)
+do
+    cat < "$temp2" | grep "$userName" > /dev/null
+    if [ $? == 0 ]
+    then
+      echo "$counter - $userName has logged on since $dateRange" >> $temp3
+      ((counter++))
+    else
+      echo "$counter2 - ***** $userName has not logged on since $dateRange *****" >> $temp4
+      ((counter2++)) 
+    fi
+done
+#
+# Now to combine the ouputs and shove in a file somewhere:
+#
+cat >> /root/logon_output.log_$date << EOF
+***************************************************************************
+*
+* - Current /var/log/secure begins on $dateRange
+*
+* - This file contains SFTP accounts that have logged on since $dateRange 
+*   and those who have not.
+*
+****************************************************************************
+EOF
+echo >> "/root/logon_output.log_$date"
+echo >> "/root/logon_output.log_$date"
+cat >> /root/logon_output.log_$date << EOF
+**********************************************
+*
+* - Users who have logged on since $dateRange:
+*
+**********************************************
+EOF
+echo >> "/root/logon_output.log_$date"
+cat <  "$temp3" >> "/root/logon_output.log_$date"
+echo >> "/root/logon_output.log_$date"
+cat >> /root/logon_output.log_$date << EOF
+**************************************************
+*
+* - Users who have NOT logged on since $dateRange:
+*
+**************************************************
+EOF
+echo >> "/root/logon_output.log_$date"
+cat < "$temp4" >> "/root/logon_output.log_$date"
+echo >> "/root/logon_output.log_$date"
+echo "------ END OF FILE -----" >> "/root/logon_output.log_$date"
+#
+#
+echo "....Program complete, please see '/root/logon_output.log_$date'"
+#
+rm -f $temp1
+rm -f $temp2
+rm -f $temp3
+rm -f $temp4
